@@ -1,5 +1,4 @@
 const commonHelper = require("../helper/common");
-const bcrypt = require("bcryptjs");
 const {
   findId,
   getWorkerProfile,
@@ -13,6 +12,38 @@ const {
 } = require("../model/users");
 
 const userController = {
+  profileById: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const {
+        rows: [account],
+      } = await findId(id);
+      if (!account) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const {
+        rows: [profile],
+      } = account.role
+        ? await getWorkerProfile(id)
+        : await getCompanyProfile(id);
+      if (!profile) {
+        return res.status(404).json({ message: "Profile not found" });
+      }
+
+      delete profile.password;
+      return commonHelper.response(
+        res,
+        profile,
+        200,
+        "Profile retrieved successfully",
+      );
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  },
+
   profile: async (req, res) => {
     try {
       const id = req.payload.id;
@@ -36,7 +67,8 @@ const userController = {
       const offset = (page - 1) * limit;
       const sortby = req.query.sortby || "created_at";
       const sort = req.query.sort || "ASC";
-      const result = await getUser(limit, offset, sortby, sort);
+      const search = req.query.search || "";
+      const result = await getUser(limit, offset, sortby, sort, search);
       const {
         rows: [count],
       } = await countData();
@@ -66,9 +98,8 @@ const userController = {
   updateProfile: async (req, res) => {
     try {
       const { id } = req.params;
-      const { username, email, password } = req.body;
+      const { username } = req.body;
       const { rowCount } = await findId(id);
-      const passwordHash = bcrypt.hashSync(password, 10);
 
       if (!rowCount) {
         return res.status(404).json({
@@ -78,8 +109,6 @@ const userController = {
 
       const data = {
         username,
-        email,
-        password: passwordHash,
       };
 
       const result = await updateProfile(data, id);
@@ -110,7 +139,6 @@ const userController = {
       const result = await updateWorkerProfile(data, id);
 
       if (!result.rowCount) {
-        s;
         return res.status(404).json({
           message: "Worker profile not found",
         });

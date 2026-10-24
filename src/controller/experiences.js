@@ -15,7 +15,7 @@ const experienceController = {
       const { id: user_id } = req.params;
       const { rows } = await getExperiences(user_id);
       if (!rows.length) {
-        return res.status(404).json({
+        return res.status(200).json({
           message: "Experience not found",
         });
       }
@@ -32,7 +32,7 @@ const experienceController = {
       const { id } = req.params;
       const { rows } = await getDetailExperience(id);
       if (!rows.length) {
-        return res.status(404).json({
+        return res.status(200).json({
           message: "Experience not found",
         });
       }
@@ -88,7 +88,7 @@ const experienceController = {
       } = req.body;
       const { rowCount } = await findId(id);
       if (!rowCount) {
-        return res.status(404).json({
+        return res.status(200).json({
           message: "Experience not found",
         });
       }
@@ -120,7 +120,7 @@ const experienceController = {
       const { id } = req.params;
       const { rowCount } = await findId(id);
       if (!rowCount) {
-        return res.status(404).json({
+        return res.status(200).json({
           message: "Experience not found",
         });
       }

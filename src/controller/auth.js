@@ -116,7 +116,6 @@ const authController = {
         role: user.role,
       };
 
-      delete user.id;
       delete user.password;
       user.token = generateToken(payload);
       user.refreshToken = refreshToken(payload);
@@ -128,19 +127,27 @@ const authController = {
   },
 
   refreshToken: (req, res) => {
-    const token = req.body.refreshToken;
-    const decoded = jwt.verify(token, process.env.SECRETE_KEY_JWT);
+    try {
+      const { refreshToken: token } = req.body;
+      if (!token) {
+        return res.status(401).json({ message: "Refresh token is required" });
+      }
 
-    const payload = {
-      email: decoded.email,
-      role: decoded.role,
-    };
+      const decoded = jwt.verify(token, process.env.SECRETE_KEY_JWT);
+      const payload = {
+        id: decoded.id,
+        email: decoded.email,
+        role: decoded.role,
+      };
 
-    const result = {
-      token: generateToken(payload),
-      refreshToken: refreshToken(payload),
-    };
-    commonHelper.response(res, result, 201, "Token has refreshed");
+      const result = {
+        token: generateToken(payload),
+        refreshToken: refreshToken(payload),
+      };
+      return commonHelper.response(res, result, 201, "Token has refreshed");
+    } catch (err) {
+      return res.status(401).json({ message: "Refresh token is invalid or expired" });
+    }
   },
 };
 

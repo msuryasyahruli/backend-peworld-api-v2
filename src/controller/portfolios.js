@@ -8,6 +8,7 @@ const {
 } = require("../model/portfolios");
 const commonHelper = require("../helper/common");
 const { v4: uuidv4 } = require("uuid");
+const { deletePortfolioImage } = require("../middleware/cloudinary");
 
 const portfolioController = {
   getPortfolios: async (req, res) => {
@@ -46,8 +47,8 @@ const portfolioController = {
   createPortfolio: async (req, res) => {
     try {
       const { user_id, app_name, type, link, photo } = req.body;
-      createPortfolio({
-        id: uuidv4(),
+      await createPortfolio({
+        id: req.portfolioProductId || uuidv4(),
         user_id,
         app_name,
         type,
@@ -92,12 +93,23 @@ const portfolioController = {
 
   deletePortfolio: async (req, res) => {
     try {
-      const { id } = req.params;
-      const { rowCount } = await findId(id);
+      const productId = req.params.id;
+      const { rowCount } = await findId(productId);
       if (!rowCount) {
         return res.status(404).json({ message: "Portfolio not found" });
       }
-      await deletePortfolio(id);
+
+      const cloudinaryResult = await deletePortfolioImage(productId);
+      if (
+        cloudinaryResult.result !== "ok" &&
+        cloudinaryResult.result !== "not found"
+      ) {
+        throw new Error(
+          `Cloudinary failed to delete portfolio image: ${cloudinaryResult.result}`,
+        );
+      }
+
+      await deletePortfolio(productId);
       commonHelper.response(res, [], 200, "Delete portfolio successful");
     } catch (err) {
       console.error(err);

@@ -1,6 +1,6 @@
 const pool = require("../config/db");
 
-const getUser = (limit, offset, sortby, sort) => {
+const getUser = (limit, offset, sortby, sort, search) => {
   return pool.query(`SELECT
     u."id",
     u."name",
@@ -10,7 +10,10 @@ const getUser = (limit, offset, sortby, sort) => {
     FROM "worker_profiles" wp
     LEFT JOIN "users" u
     ON wp."user_id" = u."id"
-    ORDER BY ${sortby} ${sort} LIMIT ${limit} OFFSET ${offset}`);
+    WHERE u."name" ILIKE $1
+    ORDER BY ${sortby} ${sort} LIMIT ${limit} OFFSET ${offset}`,
+    [`%${search}%`]
+  );
 };
 
 const getWorkerProfile = (id) => {
@@ -36,16 +39,14 @@ const getCompanyProfile = (id) => {
 };
 
 const updateProfile = (data, id) => {
-  const { username, email, password } = data;
+  const { username } = data;
   return pool.query(
     `UPDATE "users" SET 
     "name"=COALESCE($1, name),
-    "email"=COALESCE($2, email),
-    "password"=COALESCE($3, password),
     "updated_at"=NOW() 
-    WHERE "id"=$4 
+    WHERE "id"=$2
     RETURNING *`,
-    [username, email, password, id],
+    [username, id],
   );
 };
 

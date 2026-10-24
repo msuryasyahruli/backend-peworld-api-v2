@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const userController = require("../controller/users");
+const authController = require("../controller/auth");
 const protect = require("../middleware/auth");
 const {
   validate,
@@ -8,6 +9,8 @@ const {
   companyProfileSchema,
 } = require("../middleware/validate");
 
+router.get("/profile/:id", userController.profileById);
+router.post("/refresh-token", authController.refreshToken);
 router.get("/profile", protect, userController.profile);
 router.get("/allworker", userController.allWorker);
 router.patch("/profile/:id", protect, userController.updateProfile);
