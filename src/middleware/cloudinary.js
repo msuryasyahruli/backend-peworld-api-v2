@@ -1,9 +1,22 @@
-const cloudinary = require("cloudinary").v2;
+const cloudinary = require("../config/cloudinary");
 
-cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.API_KEY,
-  api_secret: process.env.API_SECRET,
-});
+/**
+ * Uploads an image file to Cloudinary.
+ * @param {string} filePath - Local path to the image file.
+ * @returns {Promise<object>} Cloudinary upload result.
+ */
 
-module.exports = cloudinary;
+async function uploadImage(filePath) {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload(
+      filePath,
+      { folder: process.env.CLOUDINARY_FOLDER || "uploads" },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      },
+    );
+  });
+}
+
+module.exports = { uploadImage };

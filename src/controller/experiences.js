@@ -59,7 +59,7 @@ const experienceController = {
         description,
       } = req.body;
 
-      const result = await createExperience({
+      await createExperience({
         id: uuidv4(),
         user_id,
         position,
@@ -69,12 +69,7 @@ const experienceController = {
         description,
       });
 
-      commonHelper.response(
-        res,
-        result.rows,
-        201,
-        "Create experience successful",
-      );
+      commonHelper.response(res, [], 201, "Create experience successful");
     } catch (err) {
       console.error(err);
       res.status(500).json({ message: "Internal server error" });
@@ -123,13 +118,14 @@ const experienceController = {
   deleteExperience: async (req, res) => {
     try {
       const { id } = req.params;
-      const result = await deleteExperience(id);
-      commonHelper.response(
-        res,
-        result.rows,
-        200,
-        "Delete experience successful",
-      );
+      const { rowCount } = await findId(id);
+      if (!rowCount) {
+        return res.status(404).json({
+          message: "Experience not found",
+        });
+      }
+      await deleteExperience(id);
+      commonHelper.response(res, [], 200, "Delete experience successful");
     } catch (err) {
       console.error(err);
       res.status(500).json({ message: "Internal server error" });
